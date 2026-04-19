@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: shannon-api
+      spec:
+        template:
+          spec:
+            containers:
+              - name: api
+                imagePullPolicy: Never

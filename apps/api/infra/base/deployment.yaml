@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shannon-api
+  namespace: shannon
+  labels:
+    app: shannon-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shannon-api
+  template:
+    metadata:
+      labels:
+        app: shannon-api
+    spec:
+      serviceAccountName: shannon-api
+      containers:
+        - name: api
+          image: keygraph/shannon-api:latest
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: shannon-temporal:7233
+            - name: WORKER_IMAGE
+              value: keygraph/shannon:latest
+            - name: K8S_NAMESPACE
+              value: shannon
+          envFrom:
+            - secretRef:
+                name: shannon-credentials
+          volumeMounts:
+            - name: workspaces
+              mountPath: /app/workspaces
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: 128Mi
+              cpu: 100m
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: workspaces
+          persistentVolumeClaim:
+            claimName: shannon-workspaces

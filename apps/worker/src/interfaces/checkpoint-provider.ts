@@ -11,11 +11,7 @@
 import type { PipelineState } from '../temporal/shared.js';
 
 export interface CheckpointProvider {
-  onAgentComplete(
-    agentName: string,
-    phase: string,
-    state: PipelineState,
-  ): Promise<void>;
+  onAgentComplete(agentName: string, phase: string, state: PipelineState): Promise<void>;
 }
 
 /** Default no-op implementation — no external checkpointing. */

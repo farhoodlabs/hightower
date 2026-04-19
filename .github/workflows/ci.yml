@@ -39,8 +39,8 @@ jobs:
       - name: Lint
         run: pnpm biome
 
-  build-images:
-    name: Build & push images
+  build-worker:
+    name: Build & push worker image
     needs: check
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: runners-farhoodliquor
@@ -70,6 +70,29 @@ jobs:
           tags: |
             ghcr.io/farhoodliquor/shannon:latest
             ghcr.io/farhoodliquor/shannon:sha-${{ github.sha }}
+
+  build-api:
+    name: Build & push API image
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: runners-farhoodliquor
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Log in to GHCR
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push API image
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0

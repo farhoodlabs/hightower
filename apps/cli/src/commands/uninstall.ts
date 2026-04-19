@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import * as p from '@clack/prompts';
-import { stopInfra, stopWorkers } from '../docker.js';
+import { getOrchestrator } from '../backend.js';
 
 const SHANNON_HOME = path.join(os.homedir(), '.shannon');
 
@@ -28,8 +28,9 @@ export async function uninstall(): Promise<void> {
   }
 
   // Stop any running containers first
-  stopWorkers();
-  stopInfra(false);
+  const orchestrator = await getOrchestrator();
+  orchestrator.stopWorkers();
+  orchestrator.stopInfra(false);
 
   fs.rmSync(SHANNON_HOME, { recursive: true, force: true });
   p.log.success('All Shannon data has been removed.');

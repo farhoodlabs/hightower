@@ -2,11 +2,13 @@
  * `shannon status` command — show running workers and Temporal health.
  */
 
-import { isTemporalReady, listRunningWorkers } from '../docker.js';
+import { getOrchestrator } from '../backend.js';
 
-export function status(): void {
+export async function status(): Promise<void> {
+  const orchestrator = await getOrchestrator();
+
   // 1. Temporal health
-  const temporalUp = isTemporalReady();
+  const temporalUp = orchestrator.isTemporalReady();
   console.log(`Temporal: ${temporalUp ? 'running' : 'not running'}`);
   if (temporalUp) {
     console.log('  Web UI: http://localhost:8233');
@@ -14,7 +16,7 @@ export function status(): void {
   console.log('');
 
   // 2. Running workers
-  const workers = listRunningWorkers();
+  const workers = orchestrator.listRunningWorkers();
   if (workers) {
     console.log('Workers:');
     console.log(workers);

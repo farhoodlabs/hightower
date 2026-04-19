@@ -3,7 +3,7 @@
  */
 
 import * as p from '@clack/prompts';
-import { stopInfra, stopWorkers } from '../docker.js';
+import { getOrchestrator } from '../backend.js';
 
 export async function stop(clean: boolean): Promise<void> {
   if (clean) {
@@ -16,6 +16,7 @@ export async function stop(clean: boolean): Promise<void> {
     }
   }
 
-  stopWorkers();
-  stopInfra(clean);
+  const orchestrator = await getOrchestrator();
+  orchestrator.stopWorkers();
+  orchestrator.stopInfra(clean);
 }

@@ -1,0 +1,20 @@
+{
+  "name": "@shannon/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.14.0",
+    "@kubernetes/client-node": "^1.4.0",
+    "@shannon/worker": "workspace:*",
+    "@temporalio/client": "^1.11.0",
+    "hono": "^4.7.0",
+    "zod": "^4.3.6"
+  }
+}

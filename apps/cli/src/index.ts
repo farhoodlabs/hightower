@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setBackend } from './backend.js';
 import { build } from './commands/build.js';
 import { logs } from './commands/logs.js';
 import { setup } from './commands/setup.js';
@@ -179,6 +180,19 @@ function parseStartArgs(argv: string[]): ParsedStartArgs {
 // === Main Dispatch ===
 
 const args = process.argv.slice(2);
+
+// Parse --backend flag before command dispatch
+const backendIdx = args.indexOf('--backend');
+if (backendIdx !== -1) {
+  const backendVal = args[backendIdx + 1];
+  if (backendVal === 'k8s' || backendVal === 'kubernetes') {
+    setBackend('k8s');
+  } else if (backendVal === 'docker') {
+    setBackend('docker');
+  }
+  args.splice(backendIdx, 2);
+}
+
 const command = args[0];
 
 switch (command) {
@@ -201,10 +215,10 @@ switch (command) {
     break;
   }
   case 'workspaces':
-    workspaces(getVersion());
+    await workspaces(getVersion());
     break;
   case 'status':
-    status();
+    await status();
     break;
   case 'setup':
     if (getMode() === 'local') {

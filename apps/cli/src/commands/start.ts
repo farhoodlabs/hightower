@@ -5,11 +5,11 @@
  * and npx mode (Docker Hub pull, ~/.shannon/).
  */
 
-import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { ensureImage, ensureInfra, randomSuffix, spawnWorker } from '../docker.js';
+import { getOrchestrator } from '../backend.js';
+import { randomSuffix } from '../docker.js';
 import { buildEnvFlags, isRouterConfigured, loadEnv, validateCredentials } from '../env.js';
 import { getCredentialsPath, getWorkspacesDir, initHome } from '../home.js';
 import { isLocal } from '../mode.js';
@@ -55,9 +55,10 @@ export async function start(args: StartArgs): Promise<void> {
     process.env.ANTHROPIC_AUTH_TOKEN = 'shannon-router-key';
   }
 
-  // 6. Ensure image (auto-build in dev, pull in npx) and start infra
-  ensureImage(args.version);
-  await ensureInfra(useRouter);
+  // 6. Ensure image and start infra via orchestrator
+  const orchestrator = await getOrchestrator();
+  orchestrator.ensureImage(args.version);
+  await orchestrator.ensureInfra(useRouter);
 
   // 7. Generate unique task queue and container name
   const suffix = randomSuffix();
@@ -94,20 +95,20 @@ export async function start(args: StartArgs): Promise<void> {
     process.env.GOOGLE_APPLICATION_CREDENTIALS = '/app/credentials/google-sa-key.json';
   }
 
-  // 10. Resolve output directory
+  // 11. Resolve output directory
   const outputDir = args.output ? path.resolve(args.output) : undefined;
   if (outputDir) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // 11. Resolve prompts directory (local mode only)
+  // 12. Resolve prompts directory (local mode only)
   const promptsDir = isLocal() ? path.resolve('apps/worker/prompts') : undefined;
 
-  // 12. Display splash screen
+  // 13. Display splash screen
   displaySplash(isLocal() ? undefined : args.version);
 
-  // 13. Spawn worker container
-  const proc = spawnWorker({
+  // 14. Spawn worker via orchestrator
+  const handle = orchestrator.spawnWorker({
     version: args.version,
     url: args.url,
     repo,
@@ -123,8 +124,8 @@ export async function start(args: StartArgs): Promise<void> {
     ...(args.pipelineTesting && { pipelineTesting: true }),
   });
 
-  // 14. Wait for workflow to register, then display info
-  proc.on('error', (err) => {
+  // 15. Wait for workflow to register, then display info
+  handle.onError((err) => {
     console.error(`Failed to start worker: ${err.message}`);
     process.exit(1);
   });
@@ -181,18 +182,14 @@ export async function start(args: StartArgs): Promise<void> {
     process.stdout.write('.');
   }, 2000);
 
-  // Stop the worker container only if it hasn't started yet
+  // Stop the worker only if it hasn't started yet
   let cleaned = false;
   const cleanup = (): void => {
     if (cleaned || started) return;
     cleaned = true;
     clearInterval(pollInterval);
     console.log(`\nStopping worker ${containerName}...`);
-    try {
-      execFileSync('docker', ['stop', containerName], { stdio: 'pipe' });
-    } catch {
-      // Container may have already exited
-    }
+    handle.kill();
   };
 
   process.on('SIGINT', () => {

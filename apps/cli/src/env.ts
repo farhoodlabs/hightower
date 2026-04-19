@@ -10,7 +10,7 @@ import { resolveConfig } from './config/resolver.js';
 import { getMode } from './mode.js';
 
 /** Environment variables forwarded to worker containers. */
-const FORWARD_VARS = [
+export const FORWARD_VARS = [
   'ANTHROPIC_API_KEY',
   'ANTHROPIC_BASE_URL',
   'ANTHROPIC_AUTH_TOKEN',
@@ -59,6 +59,23 @@ export function buildEnvFlags(): string[] {
   }
 
   return flags;
+}
+
+/**
+ * Build a key-value record of env vars to forward to workers.
+ * Used by the K8s backend to create Secrets instead of Docker `-e` flags.
+ */
+export function buildEnvRecord(): Record<string, string> {
+  const env: Record<string, string> = { TEMPORAL_ADDRESS: 'shannon-temporal:7233' };
+
+  for (const key of FORWARD_VARS) {
+    const value = process.env[key];
+    if (value) {
+      env[key] = value;
+    }
+  }
+
+  return env;
 }
 
 interface CredentialValidation {

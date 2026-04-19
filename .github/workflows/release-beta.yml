@@ -13,7 +13,7 @@ concurrency:
 jobs:
   preflight:
     name: Preflight
-    runs-on: ubuntu-latest
+    runs-on: runners-farhoodliquor
     outputs:
       version: ${{ steps.version.outputs.version }}
 
@@ -45,19 +45,11 @@ jobs:
         run: 'echo "Next beta version: ${{ steps.version.outputs.version }}"'
 
   build-docker:
-    name: Build Docker (${{ matrix.platform }})
+    name: Build Docker (worker)
     needs: preflight
+    runs-on: runners-farhoodliquor
     permissions:
       contents: read
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - platform: linux/amd64
-            runner: ubuntu-latest
-          - platform: linux/arm64
-            runner: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout
@@ -72,47 +64,25 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push by digest
-        id: build
+      - name: Build and push worker image
         uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
         with:
           context: .
-          platforms: ${{ matrix.platform }}
+          push: true
           provenance: mode=max
           sbom: true
-          outputs: type=image,name=keygraph/shannon,push-by-digest=true,name-canonical=true,push=true
+          tags: keygraph/shannon:${{ needs.preflight.outputs.version }}
 
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
-
-      - name: Upload digest
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: digests-${{ matrix.platform == 'linux/amd64' && 'amd64' || 'arm64' }}
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
-  merge-docker:
-    name: Push Docker manifests
-    needs: [preflight, build-docker]
-    runs-on: ubuntu-latest
+  build-docker-api:
+    name: Build Docker (API)
+    needs: preflight
+    runs-on: runners-farhoodliquor
     permissions:
       contents: read
-      id-token: write
-    outputs:
-      digest: ${{ steps.inspect.outputs.digest }}
 
     steps:
-      - name: Download digests
-        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53 # v6.0.0
-        with:
-          path: /tmp/digests
-          pattern: digests-*
-          merge-multiple: true
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -123,38 +93,79 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create manifest list and push
-        working-directory: /tmp/digests
-        run: |
-          docker buildx imagetools create \
-            --tag "keygraph/shannon:${{ needs.preflight.outputs.version }}" \
-            $(printf 'keygraph/shannon@sha256:%s ' *)
+      - name: Build and push API image
+        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: keygraph/shannon-api:${{ needs.preflight.outputs.version }}
 
-      - name: Inspect image
-        id: inspect
+  sign-docker:
+    name: Sign Docker images
+    needs: [preflight, build-docker, build-docker-api]
+    runs-on: runners-farhoodliquor
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      worker_digest: ${{ steps.inspect-worker.outputs.digest }}
+      api_digest: ${{ steps.inspect-api.outputs.digest }}
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Inspect worker image
+        id: inspect-worker
         run: |
           docker buildx imagetools inspect "keygraph/shannon:${{ needs.preflight.outputs.version }}"
           DIGEST="sha256:$(docker buildx imagetools inspect --raw "keygraph/shannon:${{ needs.preflight.outputs.version }}" | sha256sum | cut -d' ' -f1)"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
+      - name: Inspect API image
+        id: inspect-api
+        run: |
+          docker buildx imagetools inspect "keygraph/shannon-api:${{ needs.preflight.outputs.version }}"
+          DIGEST="sha256:$(docker buildx imagetools inspect --raw "keygraph/shannon-api:${{ needs.preflight.outputs.version }}" | sha256sum | cut -d' ' -f1)"
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
+
       - name: Install cosign
         uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
-      - name: Sign Docker image
-        run: cosign sign --yes "keygraph/shannon@${{ steps.inspect.outputs.digest }}"
+      - name: Sign worker image
+        run: cosign sign --yes "keygraph/shannon@${{ steps.inspect-worker.outputs.digest }}"
 
-      - name: Verify Docker image signature
+      - name: Sign API image
+        run: cosign sign --yes "keygraph/shannon-api@${{ steps.inspect-api.outputs.digest }}"
+
+      - name: Verify worker image signature
         run: |
           sleep 10
           cosign verify \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             --certificate-identity https://github.com/${{ github.repository }}/.github/workflows/release-beta.yml@${{ github.ref }} \
-            "keygraph/shannon@${{ steps.inspect.outputs.digest }}"
+            "keygraph/shannon@${{ steps.inspect-worker.outputs.digest }}"
+
+      - name: Verify API image signature
+        run: |
+          cosign verify \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity https://github.com/${{ github.repository }}/.github/workflows/release-beta.yml@${{ github.ref }} \
+            "keygraph/shannon-api@${{ steps.inspect-api.outputs.digest }}"
 
   publish-npm:
     name: Publish npm (beta)
-    needs: [preflight, merge-docker]
-    runs-on: ubuntu-latest
+    needs: [preflight, sign-docker]
+    runs-on: runners-farhoodliquor
     permissions:
       contents: read
       id-token: write

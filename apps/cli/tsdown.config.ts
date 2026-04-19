@@ -6,6 +6,6 @@ export default defineConfig({
   target: 'node18',
   outDir: 'dist',
   clean: true,
-  deps: { neverBundle: ['@clack/prompts', 'dotenv', 'smol-toml'] },
+  deps: { neverBundle: ['@clack/prompts', 'dotenv', 'smol-toml', '@kubernetes/client-node'] },
   banner: { js: '#!/usr/bin/env node' },
 });

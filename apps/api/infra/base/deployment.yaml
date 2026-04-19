@@ -18,7 +18,7 @@ spec:
       serviceAccountName: shannon-api
       containers:
         - name: api
-          image: keygraph/shannon-api:latest
+          image: ghcr.io/farhoodliquor/shannon-api:latest
           ports:
             - containerPort: 3000
               name: http
@@ -26,7 +26,7 @@ spec:
             - name: TEMPORAL_ADDRESS
               value: shannon-temporal:7233
             - name: WORKER_IMAGE
-              value: keygraph/shannon:latest
+              value: ghcr.io/farhoodliquor/shannon:latest
             - name: K8S_NAMESPACE
               value: shannon
           envFrom:

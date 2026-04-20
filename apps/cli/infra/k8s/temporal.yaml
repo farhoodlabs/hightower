@@ -29,9 +29,8 @@ spec:
     spec:
       containers:
         - name: temporal
-          image: temporalio/cli:latest
-          command:
-            - temporal
+          image: temporalio/temporal:latest
+          args:
             - server
             - start-dev
             - --db-filename

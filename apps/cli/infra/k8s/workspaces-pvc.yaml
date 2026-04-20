@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: hightower-workspaces
-  namespace: shannon
+  namespace: hightower
 spec:
   accessModes:
     - ReadWriteMany

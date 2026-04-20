@@ -101,5 +101,5 @@ jobs:
           file: apps/api/Dockerfile
           push: true
           tags: |
-            ghcr.io/farhoodliquor/shannon-api:latest
-            ghcr.io/farhoodliquor/shannon-api:sha-${{ github.sha }}
+            ghcr.io/farhoodliquor/hightower-api:latest
+            ghcr.io/farhoodliquor/hightower-api:sha-${{ github.sha }}

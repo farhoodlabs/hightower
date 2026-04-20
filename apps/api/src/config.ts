@@ -28,9 +28,9 @@ export function loadConfig(): Config {
 
   return {
     port: Number(process.env.PORT) || 3000,
-    temporalAddress: process.env.TEMPORAL_ADDRESS || 'shannon-temporal:7233',
+    temporalAddress: process.env.TEMPORAL_ADDRESS || 'hightower-temporal:7233',
     apiKey,
-    k8sNamespace: process.env.K8S_NAMESPACE || 'shannon',
+    k8sNamespace: process.env.K8S_NAMESPACE || 'hightower',
     workerImage,
     workspacesDir: process.env.WORKSPACES_DIR || '/app/workspaces',
     credentialsSecretName: process.env.CREDENTIALS_SECRET_NAME || 'hightower-credentials',

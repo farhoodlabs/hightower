@@ -2,7 +2,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: temporal-data
-  namespace: shannon
+  namespace: hightower
 spec:
   accessModes:
     - ReadWriteOnce
@@ -13,19 +13,19 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shannon-temporal
-  namespace: shannon
+  name: hightower-temporal
+  namespace: hightower
   labels:
-    app: shannon-temporal
+    app: hightower-temporal
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: shannon-temporal
+      app: hightower-temporal
   template:
     metadata:
       labels:
-        app: shannon-temporal
+        app: hightower-temporal
     spec:
       containers:
         - name: temporal
@@ -72,11 +72,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: shannon-temporal
-  namespace: shannon
+  name: hightower-temporal
+  namespace: hightower
 spec:
   selector:
-    app: shannon-temporal
+    app: hightower-temporal
   ports:
     - name: grpc
       port: 7233

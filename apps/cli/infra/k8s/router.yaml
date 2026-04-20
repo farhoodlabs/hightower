@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shannon-router
-  namespace: shannon
+  name: hightower-router
+  namespace: hightower
   labels:
-    app: shannon-router
+    app: hightower-router
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: shannon-router
+      app: hightower-router
   template:
     metadata:
       labels:
-        app: shannon-router
+        app: hightower-router
     spec:
       containers:
         - name: router
@@ -54,16 +54,16 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: shannon-router-config
+            name: hightower-router-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: shannon-router
-  namespace: shannon
+  name: hightower-router
+  namespace: hightower
 spec:
   selector:
-    app: shannon-router
+    app: hightower-router
   ports:
     - port: 3456
       targetPort: 3456

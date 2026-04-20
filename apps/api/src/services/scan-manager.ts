@@ -106,7 +106,7 @@ export async function listScans(
   const jobs = await listWorkerJobs(batchApi, config.k8sNamespace);
   for (const job of jobs) {
     const jobName = job.metadata?.name ?? '';
-    const workspace = job.metadata?.labels?.['shannon.io/workspace'] ?? jobName;
+    const workspace = job.metadata?.labels?.['hightower.io/workspace'] ?? jobName;
     const startTime = job.status?.startTime;
 
     results.push({

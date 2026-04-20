@@ -17,7 +17,7 @@ import { getMode } from './mode.js';
 import type { Orchestrator, WorkerHandle, WorkerOptions } from './orchestrator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const NAMESPACE = 'shannon';
+const NAMESPACE = 'hightower';
 const NPX_IMAGE_REPO = 'keygraph/shannon';
 const DEV_IMAGE = 'shannon-worker';
 const WORKER_LABEL = 'hightower-worker';
@@ -112,7 +112,7 @@ export class K8sOrchestrator implements Orchestrator {
     try {
       const response = await this.coreApi.listNamespacedPod({
         namespace: NAMESPACE,
-        labelSelector: 'app=shannon-temporal',
+        labelSelector: 'app=hightower-temporal',
       });
       return response.items.some((pod) => {
         const conditions = pod.status?.conditions ?? [];
@@ -167,7 +167,7 @@ export class K8sOrchestrator implements Orchestrator {
     } else {
       volumes.push({
         name: 'repo',
-        persistentVolumeClaim: { claimName: `shannon-repo-${jobName}` },
+        persistentVolumeClaim: { claimName: `hightower-repo-${jobName}` },
       });
     }
     volumeMounts.push({
@@ -195,7 +195,7 @@ export class K8sOrchestrator implements Orchestrator {
     }
 
     // Build env vars from the secret + TEMPORAL_ADDRESS
-    const env: k8s.V1EnvVar[] = [{ name: 'TEMPORAL_ADDRESS', value: 'shannon-temporal:7233' }];
+    const env: k8s.V1EnvVar[] = [{ name: 'TEMPORAL_ADDRESS', value: 'hightower-temporal:7233' }];
 
     const job: k8s.V1Job = {
       apiVersion: 'batch/v1',
@@ -205,7 +205,7 @@ export class K8sOrchestrator implements Orchestrator {
         namespace: NAMESPACE,
         labels: {
           app: WORKER_LABEL,
-          'shannon.io/workspace': opts.workspace,
+          'hightower.io/workspace': opts.workspace,
         },
       },
       spec: {
@@ -215,7 +215,7 @@ export class K8sOrchestrator implements Orchestrator {
           metadata: {
             labels: {
               app: WORKER_LABEL,
-              'shannon.io/workspace': opts.workspace,
+              'hightower.io/workspace': opts.workspace,
             },
           },
           spec: {
@@ -282,10 +282,10 @@ export class K8sOrchestrator implements Orchestrator {
         });
     } else {
       // Just delete the Temporal deployment and services
-      this.appsApi.deleteNamespacedDeployment({ name: 'shannon-temporal', namespace: NAMESPACE }).catch(() => {});
-      this.coreApi.deleteNamespacedService({ name: 'shannon-temporal', namespace: NAMESPACE }).catch(() => {});
-      this.appsApi.deleteNamespacedDeployment({ name: 'shannon-router', namespace: NAMESPACE }).catch(() => {});
-      this.coreApi.deleteNamespacedService({ name: 'shannon-router', namespace: NAMESPACE }).catch(() => {});
+      this.appsApi.deleteNamespacedDeployment({ name: 'hightower-temporal', namespace: NAMESPACE }).catch(() => {});
+      this.coreApi.deleteNamespacedService({ name: 'hightower-temporal', namespace: NAMESPACE }).catch(() => {});
+      this.appsApi.deleteNamespacedDeployment({ name: 'hightower-router', namespace: NAMESPACE }).catch(() => {});
+      this.coreApi.deleteNamespacedService({ name: 'hightower-router', namespace: NAMESPACE }).catch(() => {});
       console.log('Infrastructure resources deleted.');
     }
   }
@@ -298,7 +298,7 @@ export class K8sOrchestrator implements Orchestrator {
 
   runEphemeral(image: string, args: string[], mounts: string[]): void {
     // For K8s, run an ephemeral pod and wait for completion
-    const podName = `shannon-ephemeral-${Date.now()}`;
+    const podName = `hightower-ephemeral-${Date.now()}`;
 
     const volumeMounts: k8s.V1VolumeMount[] = [];
     const volumes: k8s.V1Volume[] = [];
@@ -378,7 +378,7 @@ export class K8sOrchestrator implements Orchestrator {
         body: {
           apiVersion: 'v1',
           kind: 'Namespace',
-          metadata: { name: NAMESPACE, labels: { 'app.kubernetes.io/part-of': 'shannon' } },
+          metadata: { name: NAMESPACE, labels: { 'app.kubernetes.io/part-of': 'hightower' } },
         },
       });
     }

@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hightower-api
-  namespace: shannon
+  namespace: hightower
   labels:
     app: hightower-api
 spec:
@@ -24,11 +24,11 @@ spec:
               name: http
           env:
             - name: TEMPORAL_ADDRESS
-              value: shannon-temporal:7233
+              value: hightower-temporal:7233
             - name: WORKER_IMAGE
               value: ghcr.io/farhoodliquor/shannon:latest
             - name: K8S_NAMESPACE
-              value: shannon
+              value: hightower
           envFrom:
             - secretRef:
                 name: hightower-credentials

@@ -87,7 +87,7 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
   }
 
   // 4. Env vars
-  const env: k8s.V1EnvVar[] = [{ name: 'TEMPORAL_ADDRESS', value: 'shannon-temporal:7233' }];
+  const env: k8s.V1EnvVar[] = [{ name: 'TEMPORAL_ADDRESS', value: 'hightower-temporal:7233' }];
 
   // 5. Construct the Job
   return {
@@ -98,8 +98,8 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
       namespace: params.namespace,
       labels: {
         app: WORKER_LABEL,
-        'shannon.io/workspace': params.workspace,
-        'shannon.io/scan-id': params.jobName,
+        'hightower.io/workspace': params.workspace,
+        'hightower.io/scan-id': params.jobName,
       },
     },
     spec: {
@@ -109,7 +109,7 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
         metadata: {
           labels: {
             app: WORKER_LABEL,
-            'shannon.io/workspace': params.workspace,
+            'hightower.io/workspace': params.workspace,
           },
         },
         spec: {

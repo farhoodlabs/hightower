@@ -2,7 +2,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: hightower-api
-  namespace: shannon
+  namespace: hightower
 rules:
   - apiGroups: ["batch"]
     resources: ["jobs"]
@@ -18,11 +18,11 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: hightower-api
-  namespace: shannon
+  namespace: hightower
 subjects:
   - kind: ServiceAccount
     name: hightower-api
-    namespace: shannon
+    namespace: hightower
 roleRef:
   kind: Role
   name: hightower-api

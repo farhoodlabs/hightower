@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: shannon-workspaces
+  name: hightower-workspaces
   namespace: shannon
 spec:
   accessModes:

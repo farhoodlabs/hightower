@@ -4,7 +4,7 @@
 
 import type * as k8s from '@kubernetes/client-node';
 
-const WORKER_LABEL = 'shannon-worker';
+const WORKER_LABEL = 'hightower-worker';
 
 export async function createJob(batchApi: k8s.BatchV1Api, namespace: string, job: k8s.V1Job): Promise<void> {
   await batchApi.createNamespacedJob({ namespace, body: job });

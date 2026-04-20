@@ -33,6 +33,6 @@ export function loadConfig(): Config {
     k8sNamespace: process.env.K8S_NAMESPACE || 'shannon',
     workerImage,
     workspacesDir: process.env.WORKSPACES_DIR || '/app/workspaces',
-    credentialsSecretName: process.env.CREDENTIALS_SECRET_NAME || 'shannon-credentials',
+    credentialsSecretName: process.env.CREDENTIALS_SECRET_NAME || 'hightower-credentials',
   };
 }

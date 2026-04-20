@@ -21,7 +21,7 @@ export interface JobParams {
   readonly pipelineTesting?: boolean;
 }
 
-const WORKER_LABEL = 'shannon-worker';
+const WORKER_LABEL = 'hightower-worker';
 const REPO_MOUNT_PATH = '/repo';
 
 export function buildJobSpec(params: JobParams): k8s.V1Job {
@@ -36,7 +36,7 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
 
   // 2. Build volumes and mounts
   const volumes: k8s.V1Volume[] = [
-    { name: 'workspaces', persistentVolumeClaim: { claimName: 'shannon-workspaces' } },
+    { name: 'workspaces', persistentVolumeClaim: { claimName: 'hightower-workspaces' } },
     { name: 'shm', emptyDir: { medium: 'Memory', sizeLimit: '2Gi' } },
   ];
 

@@ -26,10 +26,10 @@ export async function startScan(
 ): Promise<ScanResponse> {
   const suffix = randomSuffix();
   const taskQueue = `api-${suffix}`;
-  const jobName = `shannon-worker-${suffix}`;
+  const jobName = `hightower-worker-${suffix}`;
 
   const workspace =
-    input.workspace ?? `${new URL(input.targetUrl).hostname.replace(/[^a-zA-Z0-9-]/g, '-')}_shannon-${Date.now()}`;
+    input.workspace ?? `${new URL(input.targetUrl).hostname.replace(/[^a-zA-Z0-9-]/g, '-')}_hightower-${Date.now()}`;
 
   const job = buildJobSpec({
     jobName,

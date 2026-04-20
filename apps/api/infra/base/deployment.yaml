@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: shannon-api
+  name: hightower-api
   namespace: shannon
   labels:
-    app: shannon-api
+    app: hightower-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: shannon-api
+      app: hightower-api
   template:
     metadata:
       labels:
-        app: shannon-api
+        app: hightower-api
     spec:
-      serviceAccountName: shannon-api
+      serviceAccountName: hightower-api
       containers:
         - name: api
-          image: ghcr.io/farhoodliquor/shannon-api:latest
+          image: ghcr.io/farhoodliquor/hightower-api:latest
           ports:
             - containerPort: 3000
               name: http
@@ -31,7 +31,7 @@ spec:
               value: shannon
           envFrom:
             - secretRef:
-                name: shannon-credentials
+                name: hightower-credentials
           volumeMounts:
             - name: workspaces
               mountPath: /app/workspaces
@@ -56,4 +56,4 @@ spec:
       volumes:
         - name: workspaces
           persistentVolumeClaim:
-            claimName: shannon-workspaces
+            claimName: hightower-workspaces

@@ -31,7 +31,7 @@ spec:
             - containerPort: 3456
           envFrom:
             - secretRef:
-                name: shannon-credentials
+                name: hightower-credentials
           env:
             - name: HOST
               value: "0.0.0.0"

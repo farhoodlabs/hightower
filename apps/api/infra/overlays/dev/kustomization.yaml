@@ -7,7 +7,7 @@ patches:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: shannon-api
+        name: hightower-api
       spec:
         template:
           spec:

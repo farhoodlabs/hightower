@@ -20,7 +20,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const NAMESPACE = 'shannon';
 const NPX_IMAGE_REPO = 'keygraph/shannon';
 const DEV_IMAGE = 'shannon-worker';
-const WORKER_LABEL = 'shannon-worker';
+const WORKER_LABEL = 'hightower-worker';
 const K8S_MANIFESTS_DIR = path.resolve(__dirname, '..', 'infra', 'k8s');
 
 // === K8s Client Setup ===
@@ -150,7 +150,7 @@ export class K8sOrchestrator implements Orchestrator {
     const volumes: k8s.V1Volume[] = [
       {
         name: 'workspaces',
-        persistentVolumeClaim: { claimName: 'shannon-workspaces' },
+        persistentVolumeClaim: { claimName: 'hightower-workspaces' },
       },
       {
         name: 'shm',
@@ -230,7 +230,7 @@ export class K8sOrchestrator implements Orchestrator {
                 command,
                 args,
                 env,
-                envFrom: [{ secretRef: { name: 'shannon-credentials' } }],
+                envFrom: [{ secretRef: { name: 'hightower-credentials' } }],
                 volumeMounts,
                 resources: {
                   requests: { memory: '2Gi' },
@@ -314,7 +314,7 @@ export class K8sOrchestrator implements Orchestrator {
         volumeMounts.push({ name: volName, mountPath: dst });
         volumes.push({
           name: volName,
-          persistentVolumeClaim: { claimName: 'shannon-workspaces' },
+          persistentVolumeClaim: { claimName: 'hightower-workspaces' },
         });
       }
     }
@@ -397,7 +397,7 @@ export class K8sOrchestrator implements Orchestrator {
       apiVersion: 'v1',
       kind: 'Secret',
       metadata: {
-        name: 'shannon-credentials',
+        name: 'hightower-credentials',
         namespace: NAMESPACE,
       },
       stringData,
@@ -405,7 +405,7 @@ export class K8sOrchestrator implements Orchestrator {
 
     try {
       await this.coreApi.replaceNamespacedSecret({
-        name: 'shannon-credentials',
+        name: 'hightower-credentials',
         namespace: NAMESPACE,
         body: secret,
       });

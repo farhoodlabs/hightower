@@ -65,6 +65,8 @@ spec:
                   key: password
             - name: NUM_HISTORY_SHARDS
               value: "4"
+            - name: SKIP_DB_CREATE
+              value: "true"
           readinessProbe:
             tcpSocket:
               port: 7233

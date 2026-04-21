@@ -7,8 +7,8 @@ import { serve } from '@hono/node-server';
 import * as k8s from '@kubernetes/client-node';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
-import { connectTemporal, disconnectTemporal } from './services/temporal-client.js';
 import { startMcpServer } from './mcp/server.js';
+import { connectTemporal, disconnectTemporal } from './services/temporal-client.js';
 
 async function main(): Promise<void> {
   // 1. Load configuration

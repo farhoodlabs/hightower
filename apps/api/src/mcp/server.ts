@@ -5,18 +5,12 @@
 
 import http from 'node:http';
 import type * as k8s from '@kubernetes/client-node';
-import type { Client } from '@temporalio/client';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import type { Client } from '@temporalio/client';
 import { z } from 'zod';
 import type { Config } from '../config.js';
-import {
-  cancelScan,
-  getReport,
-  getScan,
-  listScans,
-  startScan,
-} from '../services/scan-manager.js';
+import { cancelScan, getReport, getScan, listScans, startScan } from '../services/scan-manager.js';
 import type { CreateScanInput } from '../types/api.js';
 
 export interface McpServerDeps {
@@ -40,29 +34,21 @@ function createMcpServer(deps: McpServerDeps): McpServer {
   server.registerTool(
     'start_scan',
     {
-      description:
-        'Start a new penetration test scan. Returns the scan ID and initial status.',
+      description: 'Start a new penetration test scan. Returns the scan ID and initial status.',
       inputSchema: z.object({
         targetUrl: z.string().describe('Target URL to scan (e.g., https://example.com)'),
-        gitUrl: z.string().describe(
-          'Git URL of the repository to analyze (e.g., https://github.com/user/repo)',
-        ),
+        gitUrl: z.string().describe('Git URL of the repository to analyze (e.g., https://github.com/user/repo)'),
         workspace: z
           .string()
           .optional()
           .describe(
             'Optional workspace name. Must match /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}$/. Defaults to auto-generated from target URL.',
           ),
-        gitRef: z
-          .string()
-          .optional()
-          .describe('Optional Git branch/tag/commit to checkout before scanning.'),
+        gitRef: z.string().optional().describe('Optional Git branch/tag/commit to checkout before scanning.'),
         pipelineTesting: z
           .boolean()
           .optional()
-          .describe(
-            'If true, runs in minimal testing mode with fast retries (10s). Use for development.',
-          ),
+          .describe('If true, runs in minimal testing mode with fast retries (10s). Use for development.'),
       }),
     },
     async ({ targetUrl, gitUrl, workspace, gitRef, pipelineTesting }) => {
@@ -91,12 +77,9 @@ function createMcpServer(deps: McpServerDeps): McpServer {
   server.registerTool(
     'get_scan',
     {
-      description:
-        'Get the status, progress, and results of a running or completed scan.',
+      description: 'Get the status, progress, and results of a running or completed scan.',
       inputSchema: z.object({
-        scanId: z.string().describe(
-          "The scan ID returned from start_scan (e.g., hightower-worker-abc123)",
-        ),
+        scanId: z.string().describe('The scan ID returned from start_scan (e.g., hightower-worker-abc123)'),
       }),
     },
     async ({ scanId }) => {
@@ -104,9 +87,7 @@ function createMcpServer(deps: McpServerDeps): McpServer {
 
       if (!result) {
         return {
-          content: [
-            { type: 'text' as const, text: `Scan '${scanId}' not found.` },
-          ],
+          content: [{ type: 'text' as const, text: `Scan '${scanId}' not found.` }],
           isError: true,
         };
       }
@@ -130,11 +111,7 @@ function createMcpServer(deps: McpServerDeps): McpServer {
       inputSchema: z.object({}),
     },
     async () => {
-      const results = await listScans(
-        deps.config,
-        deps.temporalClient,
-        deps.batchApi,
-      );
+      const results = await listScans(deps.config, deps.temporalClient, deps.batchApi);
 
       return {
         content: [
@@ -151,19 +128,13 @@ function createMcpServer(deps: McpServerDeps): McpServer {
   server.registerTool(
     'cancel_scan',
     {
-      description:
-        'Cancel a running scan by terminating its Kubernetes Job and Temporal workflow.',
+      description: 'Cancel a running scan by terminating its Kubernetes Job and Temporal workflow.',
       inputSchema: z.object({
         scanId: z.string().describe('The scan ID to cancel.'),
       }),
     },
     async ({ scanId }) => {
-      await cancelScan(
-        deps.config,
-        deps.temporalClient,
-        deps.batchApi,
-        scanId,
-      );
+      await cancelScan(deps.config, deps.temporalClient, deps.batchApi, scanId);
 
       return {
         content: [
@@ -182,7 +153,7 @@ function createMcpServer(deps: McpServerDeps): McpServer {
     {
       description: 'Get the final security report for a completed scan.',
       inputSchema: z.object({
-        scanId: z.string().describe("The scan ID to get the report for."),
+        scanId: z.string().describe('The scan ID to get the report for.'),
       }),
     },
     async ({ scanId }) => {
@@ -209,10 +180,7 @@ function createMcpServer(deps: McpServerDeps): McpServer {
   return server;
 }
 
-export async function startMcpServer(
-  deps: McpServerDeps,
-  port: number,
-): Promise<http.Server> {
+export async function startMcpServer(deps: McpServerDeps, port: number): Promise<http.Server> {
   const mcpServer = createMcpServer(deps);
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => crypto.randomUUID(),

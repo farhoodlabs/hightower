@@ -119,6 +119,14 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
           serviceAccountName: 'default',
           securityContext: {
             seccompProfile: { type: 'Unconfined' },
+            // Claude Code refuses --allow-dangerously-skip-permissions as root.
+            // The worker image creates a "pentest" user (UID/GID 1001) but K8s job specs
+            // bypass the entrypoint.sh that normally switches to it. Run as 1001 explicitly.
+            // fsGroup gives the pentest group write access to PVC volume mounts.
+            runAsUser: 1001,
+            runAsGroup: 1001,
+            runAsNonRoot: true,
+            fsGroup: 1001,
           },
           ...(initContainers.length > 0 && { initContainers }),
           containers: [

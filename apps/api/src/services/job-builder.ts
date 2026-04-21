@@ -3,6 +3,9 @@
  * Constructs a Job that runs the Shannon worker image with the correct
  * volumes, env, and security context. Optionally includes a git clone init container.
  */
+ * Constructs a Job that runs the Shannon worker image with the correct
+ * volumes, env, and security context. Optionally includes a git clone init container.
+ */
 
 import type * as k8s from '@kubernetes/client-node';
 
@@ -21,7 +24,7 @@ export interface JobParams {
   readonly pipelineTesting?: boolean;
 }
 
-const WORKER_LABEL = 'hightower-worker';
+const WORKER_LABEL = 'hightower-worker'; //
 const REPO_MOUNT_PATH = '/repo';
 
 export function buildJobSpec(params: JobParams): k8s.V1Job {

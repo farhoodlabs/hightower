@@ -5,6 +5,7 @@
 
 export interface Config {
   readonly port: number;
+  readonly mcpPort: number;
   readonly temporalAddress: string;
   readonly apiKey: string;
   readonly k8sNamespace: string;
@@ -28,6 +29,7 @@ export function loadConfig(): Config {
 
   return {
     port: Number(process.env.PORT) || 3000,
+    mcpPort: Number(process.env.MCP_PORT) || 3100,
     temporalAddress: process.env.TEMPORAL_ADDRESS || 'hightower-temporal:7233',
     apiKey,
     k8sNamespace: process.env.K8S_NAMESPACE || 'hightower',

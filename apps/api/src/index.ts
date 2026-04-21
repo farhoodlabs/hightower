@@ -8,6 +8,7 @@ import * as k8s from '@kubernetes/client-node';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
 import { connectTemporal, disconnectTemporal } from './services/temporal-client.js';
+import { startMcpServer } from './mcp/server.js';
 
 async function main(): Promise<void> {
   // 1. Load configuration
@@ -34,14 +35,21 @@ async function main(): Promise<void> {
     coreApi,
   });
 
-  // 5. Start server
+  // 5. Start MCP server (runs alongside the Hono API on a separate port)
+  const mcpServer = await startMcpServer(
+    { config, temporalClient: temporal.client, batchApi, coreApi },
+    config.mcpPort,
+  );
+
+  // 6. Start Hono server
   const server = serve({ fetch: app.fetch, port: config.port }, (info) => {
     console.log(`Shannon API server listening on port ${info.port}`);
   });
 
-  // 6. Graceful shutdown
+  // 7. Graceful shutdown
   const shutdown = async (): Promise<void> => {
     console.log('Shutting down...');
+    mcpServer.close();
     server.close();
     await disconnectTemporal(temporal);
     process.exit(0);

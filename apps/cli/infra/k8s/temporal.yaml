@@ -1,15 +1,163 @@
-apiVersion: v1
-kind: PersistentVolumeClaim
+# CNPG PostgreSQL cluster for Temporal persistence
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
 metadata:
-  name: temporal-data
+  name: hightower-temporal-db
   namespace: hightower
 spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+  instances: 1
+  storage:
+    size: 5Gi
+    storageClass: ceph-block
+  bootstrap:
+    initdb:
+      database: temporal
+      owner: temporal
+      postInitSQL:
+        - CREATE DATABASE temporal_visibility OWNER temporal;
 ---
+# Temporal server configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hightower-temporal-config
+  namespace: hightower
+data:
+  config.yaml: |
+    log:
+      stdout: true
+      level: info
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      numHistoryShards: 4
+      datastores:
+        default:
+          sql:
+            pluginName: postgres12
+            databaseName: temporal
+            connectAddr: hightower-temporal-db-rw:5432
+            connectProtocol: tcp
+            user: temporal
+            maxConns: 20
+            maxIdleConns: 20
+        visibility:
+          sql:
+            pluginName: postgres12
+            databaseName: temporal_visibility
+            connectAddr: hightower-temporal-db-rw:5432
+            connectProtocol: tcp
+            user: temporal
+            maxConns: 10
+            maxIdleConns: 10
+    global:
+      membership:
+        maxJoinDuration: 30s
+        broadcastAddress: "0.0.0.0"
+      pprof:
+        port: 7936
+    services:
+      frontend:
+        rpc:
+          grpcPort: 7233
+          membershipPort: 6933
+          bindOnIP: "0.0.0.0"
+      history:
+        rpc:
+          grpcPort: 7234
+          membershipPort: 6934
+          bindOnIP: "0.0.0.0"
+      matching:
+        rpc:
+          grpcPort: 7235
+          membershipPort: 6935
+          bindOnIP: "0.0.0.0"
+      worker:
+        rpc:
+          grpcPort: 7239
+          membershipPort: 6939
+          bindOnIP: "0.0.0.0"
+    clusterMetadata:
+      enableGlobalNamespace: false
+      failoverVersionIncrement: 10
+      masterClusterName: active
+      currentClusterName: active
+      clusterInformation:
+        active:
+          enabled: true
+          initialFailoverVersion: 1
+          rpcName: frontend
+          rpcAddress: "localhost:7233"
+    dcRedirectionPolicy:
+      policy: noop
+    archival:
+      status: disabled
+---
+# Schema init job — runs once to set up Temporal's database tables
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hightower-temporal-schema-init
+  namespace: hightower
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+        # Wait for CNPG database to be ready
+        - name: wait-for-db
+          image: busybox:1.37
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z hightower-temporal-db-rw 5432; do
+                echo "Waiting for PostgreSQL..."
+                sleep 2
+              done
+              echo "PostgreSQL is ready"
+      containers:
+        - name: schema-default
+          image: temporalio/admin-tools:latest
+          command:
+            - sh
+            - -c
+            - |
+              temporal-sql-tool \
+                --plugin postgres12 \
+                --ep hightower-temporal-db-rw \
+                --port 5432 \
+                --db temporal \
+                --user temporal \
+                setup-schema -v 0.0 && \
+              temporal-sql-tool \
+                --plugin postgres12 \
+                --ep hightower-temporal-db-rw \
+                --port 5432 \
+                --db temporal \
+                --user temporal \
+                update-schema -d /etc/temporal/schema/postgresql/v12/temporal/versioned && \
+              temporal-sql-tool \
+                --plugin postgres12 \
+                --ep hightower-temporal-db-rw \
+                --port 5432 \
+                --db temporal_visibility \
+                --user temporal \
+                setup-schema -v 0.0 && \
+              temporal-sql-tool \
+                --plugin postgres12 \
+                --ep hightower-temporal-db-rw \
+                --port 5432 \
+                --db temporal_visibility \
+                --user temporal \
+                update-schema -d /etc/temporal/schema/postgresql/v12/visibility/versioned
+          envFrom:
+            - secretRef:
+                name: hightower-temporal-db-app
+---
+# Temporal server deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -29,46 +177,52 @@ spec:
     spec:
       containers:
         - name: temporal
-          image: temporalio/temporal:latest
-          args:
-            - server
-            - start-dev
-            - --db-filename
-            - /home/temporal/temporal.db
-            - --ip
-            - "0.0.0.0"
+          image: temporalio/server:latest
           ports:
             - containerPort: 7233
               name: grpc
-            - containerPort: 8233
-              name: web-ui
+          env:
+            - name: SERVICES
+              value: frontend,history,matching,worker
+            - name: TEMPORAL_STORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hightower-temporal-db-app
+                  key: password
+            - name: TEMPORAL_VISIBILITY_STORE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: hightower-temporal-db-app
+                  key: password
           volumeMounts:
-            - name: data
-              mountPath: /home/temporal
+            - name: config
+              mountPath: /etc/temporal/config/dynamicconfig
+              readOnly: true
+            - name: server-config
+              mountPath: /etc/temporal/config/config_template.yaml
+              subPath: config.yaml
+              readOnly: true
           readinessProbe:
-            exec:
-              command:
-                - temporal
-                - operator
-                - cluster
-                - health
-                - --address
-                - localhost:7233
-            initialDelaySeconds: 10
+            tcpSocket:
+              port: 7233
+            initialDelaySeconds: 15
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 10
           resources:
             requests:
-              memory: 256Mi
+              memory: 512Mi
               cpu: 250m
             limits:
-              memory: 512Mi
+              memory: 1Gi
       volumes:
-        - name: data
-          persistentVolumeClaim:
-            claimName: temporal-data
+        - name: config
+          emptyDir: {}
+        - name: server-config
+          configMap:
+            name: hightower-temporal-config
 ---
+# Temporal gRPC service
 apiVersion: v1
 kind: Service
 metadata:
@@ -81,6 +235,52 @@ spec:
     - name: grpc
       port: 7233
       targetPort: 7233
-    - name: web-ui
+---
+# Temporal Web UI (optional)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hightower-temporal-ui
+  namespace: hightower
+  labels:
+    app: hightower-temporal-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hightower-temporal-ui
+  template:
+    metadata:
+      labels:
+        app: hightower-temporal-ui
+    spec:
+      containers:
+        - name: ui
+          image: temporalio/ui:latest
+          ports:
+            - containerPort: 8233
+              name: http
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: hightower-temporal:7233
+            - name: TEMPORAL_UI_PORT
+              value: "8233"
+          resources:
+            requests:
+              memory: 64Mi
+              cpu: 50m
+            limits:
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hightower-temporal-ui
+  namespace: hightower
+spec:
+  selector:
+    app: hightower-temporal-ui
+  ports:
+    - name: http
       port: 8233
       targetPort: 8233

@@ -60,10 +60,7 @@ export class K8sOrchestrator implements Orchestrator {
   // === Infrastructure ===
 
   async ensureInfra(useRouter: boolean): Promise<void> {
-    // 1. Create namespace if it doesn't exist
-    await this.ensureNamespace();
-
-    // 2. Create or update credentials secret
+    // 1. Create or update credentials secret
     await this.ensureCredentialsSecret();
 
     // 3. Apply Temporal manifests
@@ -368,21 +365,6 @@ export class K8sOrchestrator implements Orchestrator {
   }
 
   // === Private Helpers ===
-
-  private async ensureNamespace(): Promise<void> {
-    try {
-      await this.coreApi.readNamespace({ name: NAMESPACE });
-    } catch {
-      console.log(`Creating namespace ${NAMESPACE}...`);
-      await this.coreApi.createNamespace({
-        body: {
-          apiVersion: 'v1',
-          kind: 'Namespace',
-          metadata: { name: NAMESPACE, labels: { 'app.kubernetes.io/part-of': 'hightower' } },
-        },
-      });
-    }
-  }
 
   private async ensureCredentialsSecret(): Promise<void> {
     const envRecord = buildEnvRecord();

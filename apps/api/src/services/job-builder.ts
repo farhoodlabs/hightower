@@ -71,7 +71,7 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
 
     initContainers.push({
       name: 'git-clone',
-      image: 'bitnami/git:2',
+      image: 'alpine/git:latest',
       command: ['git'],
       args: cloneArgs,
       volumeMounts: [{ name: 'repo', mountPath: REPO_MOUNT_PATH }],

@@ -100,6 +100,7 @@ jobs:
           context: .
           file: apps/api/Dockerfile
           push: true
+          no-cache: true
           tags: |
             ghcr.io/farhoodliquor/hightower-api:latest
             ghcr.io/farhoodliquor/hightower-api:sha-${{ github.sha }}

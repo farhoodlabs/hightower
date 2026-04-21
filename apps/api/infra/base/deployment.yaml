@@ -15,12 +15,12 @@ spec:
       labels:
         app: hightower-api
       annotations:
-        kubectl.kubernetes.io/restartedAt: "2026-04-21T12:45:00Z"
+        kubectl.kubernetes.io/restartedAt: "2026-04-21T21:26:00Z"
     spec:
       serviceAccountName: hightower-api
       containers:
         - name: api
-          image: ghcr.io/farhoodliquor/hightower-api:latest
+          image: ghcr.io/farhoodliquor/hightower-api:sha-067b58a3a6ad342b38c3fc9cfecbd362b77e67e4
           imagePullPolicy: Always
           ports:
             - containerPort: 3000

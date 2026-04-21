@@ -14,6 +14,8 @@ spec:
     metadata:
       labels:
         app: hightower-api
+      annotations:
+        kubectl.kubernetes.io/restartedAt: "2026-04-21T12:45:00Z"
     spec:
       serviceAccountName: hightower-api
       containers:

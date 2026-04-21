@@ -29,7 +29,14 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
 
   // 1. Build worker command
   const command = ['node', 'apps/worker/dist/temporal/worker.js', params.targetUrl, repoPath];
-  const args: string[] = ['--task-queue', params.taskQueue, '--workspace', params.workspace];
+  const args: string[] = [
+    '--task-queue',
+    params.taskQueue,
+    '--workspace',
+    params.workspace,
+    '--output',
+    `/app/workspaces/${params.workspace}/deliverables`,
+  ];
   if (params.pipelineTesting) {
     args.push('--pipeline-testing');
   }

@@ -72,8 +72,10 @@ export function buildJobSpec(params: JobParams): k8s.V1Job {
     initContainers.push({
       name: 'git-clone',
       image: 'alpine/git:latest',
-      command: ['git'],
-      args: cloneArgs,
+      command: ['sh', '-c'],
+      args: [
+        `git clone --depth 1 "${params.gitUrl}" "${REPO_MOUNT_PATH}" && mkdir -p "${REPO_MOUNT_PATH}/.shannon/deliverables" "${REPO_MOUNT_PATH}/.shannon/scratchpad" "${REPO_MOUNT_PATH}/.shannon/.playwright-cli"`,
+      ],
       volumeMounts: [{ name: 'repo', mountPath: REPO_MOUNT_PATH }],
     });
   } else if (params.repoPath) {

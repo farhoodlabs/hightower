@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="./assets/github-banner.png" alt="Hightower — AI Pentester" width="100%">
-
 # Hightower — AI Pentester
 
 Hightower is a fork of [Shannon](https://github.com/KeygraphHQ/shannon) by Keygraph, wrapped with a REST API and Kubernetes tooling for cluster-based deployments.

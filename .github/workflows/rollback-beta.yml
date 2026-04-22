@@ -18,7 +18,7 @@ concurrency:
 jobs:
   rollback:
     name: Roll back npm beta dist-tag
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     steps:
       - name: Validate target version
         id: target

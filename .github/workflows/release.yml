@@ -13,7 +13,7 @@ concurrency:
 jobs:
   preflight:
     name: Preflight
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     permissions:
       contents: write
     outputs:
@@ -60,7 +60,7 @@ jobs:
     name: Build Docker (worker)
     needs: preflight
     if: needs.preflight.outputs.should_release == 'true'
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     permissions:
       contents: read
 
@@ -92,7 +92,7 @@ jobs:
     name: Build Docker (API)
     needs: preflight
     if: needs.preflight.outputs.should_release == 'true'
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     permissions:
       contents: read
 
@@ -124,7 +124,7 @@ jobs:
   sign-docker:
     name: Sign Docker images
     needs: [preflight, build-docker, build-docker-api]
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     permissions:
       contents: read
       id-token: write
@@ -183,7 +183,7 @@ jobs:
   publish-npm:
     name: Publish npm
     needs: [preflight, sign-docker]
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     permissions:
       contents: read
       id-token: write
@@ -228,7 +228,7 @@ jobs:
   release:
     name: Create GitHub release
     needs: [preflight, publish-npm]
-    runs-on: runners-farhoodliquor
+    runs-on: runners-farhoodlabs
     permissions:
       contents: write
 

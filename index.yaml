@@ -1,3 +1,15 @@
 apiVersion: v1
-entries: {}
-generated: "2026-04-23T08:52:01.970946-04:00"
+entries:
+  hightower:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2026-04-23T13:20:33.047378419Z"
+    description: API-driven AI pentester built on Shannon, deployed as a service on
+      Kubernetes
+    digest: 292df96a5f1ee7261b3ba33d70f70de08fd91dcff178b028c271b570b4fb5945
+    name: hightower
+    type: application
+    urls:
+    - https://farhoodlabs.github.io/hightower/hightower-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-04-23T13:20:33.046911696Z"

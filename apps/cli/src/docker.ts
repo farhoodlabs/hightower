@@ -12,6 +12,7 @@ import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { getMode } from './mode.js';
+import type { Orchestrator, WorkerHandle, WorkerOptions as OrchestratorWorkerOptions } from './orchestrator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -295,14 +296,14 @@ export function listRunningWorkers(): string {
  * Adapter class wrapping plain functions into the Orchestrator interface
  * used by the Hightower backend abstraction layer.
  */
-export class DockerOrchestrator implements import('./orchestrator.js').Orchestrator {
+export class DockerOrchestrator implements Orchestrator {
   ensureInfra(): Promise<void> {
     return ensureInfra();
   }
   ensureImage(version: string): void {
     return ensureImage(version);
   }
-  spawnWorker(opts: import('./orchestrator.js').WorkerOptions): import('./orchestrator.js').WorkerHandle {
+  spawnWorker(opts: OrchestratorWorkerOptions): WorkerHandle {
     const proc = spawnWorker(opts as WorkerOptions);
     return {
       onError(cb: (err: Error) => void) {

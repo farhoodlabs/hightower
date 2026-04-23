@@ -12,7 +12,7 @@ import path from 'node:path';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import { getMode } from './mode.js';
-import type { Orchestrator, WorkerHandle, WorkerOptions as OrchestratorWorkerOptions } from './orchestrator.js';
+import type { Orchestrator, WorkerOptions as OrchestratorWorkerOptions, WorkerHandle } from './orchestrator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -301,7 +301,7 @@ export class DockerOrchestrator implements Orchestrator {
     return ensureInfra();
   }
   ensureImage(version: string): void {
-    return ensureImage(version);
+    ensureImage(version);
   }
   spawnWorker(opts: OrchestratorWorkerOptions): WorkerHandle {
     const proc = spawnWorker(opts as WorkerOptions);
@@ -315,10 +315,10 @@ export class DockerOrchestrator implements Orchestrator {
     };
   }
   stopWorkers(): void {
-    return stopWorkers();
+    stopWorkers();
   }
   stopInfra(clean: boolean): void {
-    return stopInfra(clean);
+    stopInfra(clean);
   }
   listRunningWorkers(): string {
     return listRunningWorkers();

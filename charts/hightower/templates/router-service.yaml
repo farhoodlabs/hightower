@@ -1,0 +1,14 @@
+{{- if .Values.router.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "hightower.router.fullname" . }}
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "hightower.router.selectorLabels" . | nindent 4 }}
+  ports:
+    - port: {{ .Values.router.port }}
+      targetPort: {{ .Values.router.port }}
+{{- end }}

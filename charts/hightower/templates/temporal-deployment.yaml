@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hightower.temporal.fullname" . }}
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+    {{- include "hightower.temporal.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.temporal.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hightower.temporal.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "hightower.temporal.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: temporal
+          image: "{{ .Values.temporal.image.repository }}:{{ .Values.temporal.image.tag }}"
+          imagePullPolicy: {{ .Values.temporal.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.temporal.ports.grpc }}
+              name: grpc
+            - containerPort: {{ .Values.temporal.ports.webUi }}
+              name: web-ui
+          env:
+            - name: DB
+              value: {{ .Values.temporal.db.type }}
+            - name: DB_PORT
+              value: {{ .Values.temporal.db.port | quote }}
+            - name: POSTGRES_SEEDS
+              value: {{ include "hightower.temporal.postgresSeeds" . }}
+            - name: DBNAME
+              value: {{ .Values.temporal.db.name }}
+            - name: VISIBILITY_DBNAME
+              value: {{ .Values.temporal.db.visibilityName }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.temporalDbApp }}
+                  key: username
+            - name: POSTGRES_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.secrets.temporalDbApp }}
+                  key: password
+            - name: NUM_HISTORY_SHARDS
+              value: {{ .Values.temporal.db.numHistoryShards | quote }}
+            - name: SKIP_DB_CREATE
+              value: {{ .Values.temporal.db.skipDbCreate | quote }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.temporal.ports.grpc }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 15
+          {{- with .Values.temporal.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}

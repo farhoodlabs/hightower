@@ -1,0 +1,10 @@
+{{- if .Values.router.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hightower.router.fullname" . }}-config
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+data:
+  router-config.json: {{ .Values.router.config | toJson | quote }}
+{{- end }}

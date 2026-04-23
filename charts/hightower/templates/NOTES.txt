@@ -1,0 +1,30 @@
+Hightower has been deployed to namespace: {{ .Release.Namespace }}
+
+== Prerequisites ==
+
+Ensure the following secrets exist in the {{ .Release.Namespace }} namespace:
+
+  1. {{ .Values.secrets.credentials }}
+     Used by the API and Router for application credentials.
+
+  2. {{ .Values.secrets.temporalDbApp }}
+     Used by Temporal for PostgreSQL authentication.
+     Required keys: username, password
+{{- if .Values.cnpg.enabled }}
+
+  The CNPG operator must be installed on this cluster.
+  https://cloudnative-pg.io/documentation/current/installation_upgrade/
+{{- else }}
+
+  CNPG is disabled. Ensure temporal.db.host points to your PostgreSQL instance:
+    --set temporal.db.host=your-postgres-host
+{{- end }}
+
+== Services ==
+
+  API:      {{ include "hightower.api.fullname" . }}:{{ .Values.api.port }}
+  Temporal: {{ include "hightower.temporal.serviceName" . }}:{{ .Values.temporal.ports.grpc }} (gRPC)
+            {{ include "hightower.temporal.serviceName" . }}:{{ .Values.temporal.ports.webUi }} (Web UI)
+{{- if .Values.router.enabled }}
+  Router:   {{ include "hightower.router.fullname" . }}:{{ .Values.router.port }}
+{{- end }}

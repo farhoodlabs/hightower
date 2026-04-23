@@ -1,0 +1,86 @@
+nameOverride: ""
+fullnameOverride: ""
+imagePullSecrets: []
+
+# Externally-managed secrets (chart never creates these)
+secrets:
+  credentials: hightower-credentials
+  temporalDbApp: hightower-temporal-db-app
+
+# Shared workspaces PVC
+workspaces:
+  storageClass: ceph-filesystem
+  accessMode: ReadWriteMany
+  size: 10Gi
+  retain: false  # true → add helm.sh/resource-policy: keep
+
+# --- API ---
+api:
+  replicaCount: 1
+  image:
+    repository: ghcr.io/farhoodlabs/hightower-api
+    tag: sha-a0efe7604ebc2f27cc37ee88f117ae619e57003f
+    pullPolicy: Always
+  port: 3000
+  workerImage: ghcr.io/farhoodlabs/shannon:latest
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+  serviceAccount:
+    create: true
+    name: ""
+
+# --- Temporal ---
+temporal:
+  replicaCount: 1
+  image:
+    repository: temporalio/auto-setup
+    tag: latest
+    pullPolicy: IfNotPresent
+  ports:
+    grpc: 7233
+    webUi: 8233
+  db:
+    type: postgres12
+    port: "5432"
+    host: ""  # defaults to <release>-temporal-db-rw via helper
+    name: temporal
+    visibilityName: temporal_visibility
+    numHistoryShards: "4"
+    skipDbCreate: "true"
+  resources:
+    requests:
+      memory: 512Mi
+      cpu: 250m
+    limits:
+      memory: 1Gi
+
+# --- CNPG PostgreSQL Cluster (optional, requires CNPG operator) ---
+cnpg:
+  enabled: true
+  instances: 1
+  storage:
+    size: 5Gi
+    storageClass: ceph-block
+
+# --- Router (optional) ---
+router:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: node
+    tag: "20-slim"
+    pullPolicy: IfNotPresent
+  port: 3456
+  package: "@musistudio/claude-code-router"
+  env:
+    HOST: "0.0.0.0"
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits: {}
+  config: {}  # serialized to router-config.json

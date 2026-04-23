@@ -1,0 +1,14 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "hightower.api.fullname" . }}
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "hightower.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "hightower.api.fullname" . }}
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hightower.api.fullname" . }}
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+    {{- include "hightower.api.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hightower.api.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "hightower.api.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "hightower.serviceAccountName" . }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: api
+          image: "{{ .Values.api.image.repository }}:{{ .Values.api.image.tag }}"
+          imagePullPolicy: {{ .Values.api.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.api.port }}
+              name: http
+          env:
+            - name: TEMPORAL_ADDRESS
+              value: "{{ include "hightower.temporal.serviceName" . }}:{{ .Values.temporal.ports.grpc }}"
+            - name: WORKER_IMAGE
+              value: {{ .Values.api.workerImage }}
+            - name: K8S_NAMESPACE
+              value: {{ .Release.Namespace }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.credentials }}
+          volumeMounts:
+            - name: workspaces
+              mountPath: /app/workspaces
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: {{ .Values.api.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          {{- with .Values.api.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: workspaces
+          persistentVolumeClaim:
+            claimName: {{ include "hightower.fullname" . }}-workspaces

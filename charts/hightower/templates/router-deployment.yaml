@@ -1,0 +1,66 @@
+{{- if .Values.router.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "hightower.router.fullname" . }}
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+    {{- include "hightower.router.selectorLabels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.router.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "hightower.router.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "hightower.router.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: router
+          image: "{{ .Values.router.image.repository }}:{{ .Values.router.image.tag }}"
+          imagePullPolicy: {{ .Values.router.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              apt-get update && apt-get install -y gettext-base &&
+              npm install -g {{ .Values.router.package }} &&
+              mkdir -p /root/.claude-code-router &&
+              envsubst < /config/router-config.json > /root/.claude-code-router/config.json &&
+              ccr start
+          ports:
+            - containerPort: {{ .Values.router.port }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.secrets.credentials }}
+          env:
+            {{- range $key, $value := .Values.router.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.router.port }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 5
+          {{- with .Values.router.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "hightower.router.fullname" . }}-config
+{{- end }}

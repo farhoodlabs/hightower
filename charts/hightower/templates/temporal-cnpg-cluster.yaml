@@ -1,0 +1,19 @@
+{{- if .Values.cnpg.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "hightower.cnpg.fullname" . }}
+  labels:
+    {{- include "hightower.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.cnpg.instances }}
+  storage:
+    size: {{ .Values.cnpg.storage.size }}
+    storageClass: {{ .Values.cnpg.storage.storageClass }}
+  bootstrap:
+    initdb:
+      database: {{ .Values.temporal.db.name }}
+      owner: {{ .Values.temporal.db.name }}
+      postInitSQL:
+        - CREATE DATABASE {{ .Values.temporal.db.visibilityName }} OWNER {{ .Values.temporal.db.name }};
+{{- end }}

@@ -290,3 +290,48 @@ export function listRunningWorkers(): string {
     'table {{.Names}}\t{{.Status}}\t{{.RunningFor}}',
   ]);
 }
+
+/**
+ * Adapter class wrapping plain functions into the Orchestrator interface
+ * used by the Hightower backend abstraction layer.
+ */
+export class DockerOrchestrator implements import('./orchestrator.js').Orchestrator {
+  ensureInfra(): Promise<void> {
+    return ensureInfra();
+  }
+  ensureImage(version: string): void {
+    return ensureImage(version);
+  }
+  spawnWorker(opts: import('./orchestrator.js').WorkerOptions): import('./orchestrator.js').WorkerHandle {
+    const proc = spawnWorker(opts as WorkerOptions);
+    return {
+      onError(cb: (err: Error) => void) {
+        proc.on('error', cb);
+      },
+      kill() {
+        proc.kill();
+      },
+    };
+  }
+  stopWorkers(): void {
+    return stopWorkers();
+  }
+  stopInfra(clean: boolean): void {
+    return stopInfra(clean);
+  }
+  listRunningWorkers(): string {
+    return listRunningWorkers();
+  }
+  isTemporalReady(): boolean {
+    return isTemporalReady();
+  }
+  getWorkerImage(version: string): string {
+    return getWorkerImage(version);
+  }
+  runEphemeral(image: string, args: string[], mounts: string[]): void {
+    const dockerArgs = ['run', '--rm', '--network', 'shannon-net'];
+    for (const m of mounts) dockerArgs.push('-v', m);
+    dockerArgs.push(image, ...args);
+    execFileSync('docker', dockerArgs, { stdio: 'inherit' });
+  }
+}

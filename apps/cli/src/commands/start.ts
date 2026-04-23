@@ -5,12 +5,11 @@
  * and npx mode (Docker Hub pull, ~/.shannon/).
  */
 
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import { getOrchestrator } from '../backend.js';
-import { randomSuffix } from '../docker.js';
-import { buildEnvFlags, isRouterConfigured, loadEnv, validateCredentials } from '../env.js';
+import { ensureImage, ensureInfra, randomSuffix, spawnWorker } from '../docker.js';
+import { buildEnvFlags, loadEnv, validateCredentials } from '../env.js';
 import { getCredentialsPath, getWorkspacesDir, initHome } from '../home.js';
 import { isLocal } from '../mode.js';
 import { resolveConfig, resolveRepo } from '../paths.js';
@@ -23,7 +22,6 @@ export interface StartArgs {
   workspace?: string;
   output?: string;
   pipelineTesting: boolean;
-  router: boolean;
   version: string;
 }
 
@@ -32,13 +30,12 @@ export async function start(args: StartArgs): Promise<void> {
   initHome();
   loadEnv();
 
-  // 2. Validate credentials and auto-detect router mode
+  // 2. Validate credentials
   const creds = validateCredentials();
   if (!creds.valid) {
     console.error(`ERROR: ${creds.error}`);
     process.exit(1);
   }
-  const useRouter = args.router || isRouterConfigured();
 
   // 3. Resolve paths
   const repo = resolveRepo(args.repo);
@@ -49,27 +46,20 @@ export async function start(args: StartArgs): Promise<void> {
   fs.mkdirSync(workspacesDir, { recursive: true });
   fs.chmodSync(workspacesDir, 0o777);
 
-  // 5. Handle router env
-  if (useRouter) {
-    process.env.ANTHROPIC_BASE_URL = 'http://shannon-router:3456';
-    process.env.ANTHROPIC_AUTH_TOKEN = 'shannon-router-key';
-  }
+  // 5. Ensure image (auto-build in dev, pull in npx) and start infra
+  ensureImage(args.version);
+  await ensureInfra();
 
-  // 6. Ensure image and start infra via orchestrator
-  const orchestrator = await getOrchestrator();
-  orchestrator.ensureImage(args.version);
-  await orchestrator.ensureInfra(useRouter);
-
-  // 7. Generate unique task queue and container name
+  // 6. Generate unique task queue and container name
   const suffix = randomSuffix();
   const taskQueue = `shannon-${suffix}`;
   const containerName = `shannon-worker-${suffix}`;
 
-  // 8. Generate workspace name if not provided
+  // 7. Generate workspace name if not provided
   const workspace =
     args.workspace ?? `${new URL(args.url).hostname.replace(/[^a-zA-Z0-9-]/g, '-')}_shannon-${Date.now()}`;
 
-  // 9. Create writable overlay directories (mounted over :ro repo paths inside container)
+  // 8. Create writable overlay directories (mounted over :ro repo paths inside container)
   // Workspace dir must be 0o777 so the container user (UID 1001) can create audit subdirs
   const workspacePath = path.join(workspacesDir, workspace);
   fs.mkdirSync(workspacePath, { recursive: true });
@@ -80,12 +70,10 @@ export async function start(args: StartArgs): Promise<void> {
     fs.chmodSync(dirPath, 0o777);
   }
 
-  // 10. Pre-create overlay mount points (Linux :ro mounts can't auto-create them)
-  if (os.platform() === 'linux') {
-    const shannonDir = path.join(repo.hostPath, '.shannon');
-    for (const dir of ['deliverables', 'scratchpad', '.playwright-cli']) {
-      fs.mkdirSync(path.join(shannonDir, dir), { recursive: true });
-    }
+  // 9. Pre-create overlay mount points (:ro mounts can't auto-create them)
+  const shannonDir = path.join(repo.hostPath, '.shannon');
+  for (const dir of ['deliverables', 'scratchpad', '.playwright-cli']) {
+    fs.mkdirSync(path.join(shannonDir, dir), { recursive: true });
   }
 
   const credentialsPath = getCredentialsPath();
@@ -95,20 +83,20 @@ export async function start(args: StartArgs): Promise<void> {
     process.env.GOOGLE_APPLICATION_CREDENTIALS = '/app/credentials/google-sa-key.json';
   }
 
-  // 11. Resolve output directory
+  // 10. Resolve output directory
   const outputDir = args.output ? path.resolve(args.output) : undefined;
   if (outputDir) {
     fs.mkdirSync(outputDir, { recursive: true });
   }
 
-  // 12. Resolve prompts directory (local mode only)
+  // 11. Resolve prompts directory (local mode only)
   const promptsDir = isLocal() ? path.resolve('apps/worker/prompts') : undefined;
 
-  // 13. Display splash screen
+  // 12. Display splash screen
   displaySplash(isLocal() ? undefined : args.version);
 
-  // 14. Spawn worker via orchestrator
-  const handle = orchestrator.spawnWorker({
+  // 13. Spawn worker container
+  const proc = spawnWorker({
     version: args.version,
     url: args.url,
     repo,
@@ -124,8 +112,8 @@ export async function start(args: StartArgs): Promise<void> {
     ...(args.pipelineTesting && { pipelineTesting: true }),
   });
 
-  // 15. Wait for workflow to register, then display info
-  handle.onError((err) => {
+  // 14. Wait for workflow to register, then display info
+  proc.on('error', (err) => {
     console.error(`Failed to start worker: ${err.message}`);
     process.exit(1);
   });
@@ -173,7 +161,7 @@ export async function start(args: StartArgs): Promise<void> {
 
         // Clear waiting line and show info
         process.stdout.write('\r\x1b[K');
-        printInfo(args, useRouter, workspace, workflowId, repo.hostPath, workspacesDir);
+        printInfo(args, workspace, workflowId, repo.hostPath, workspacesDir);
         return;
       }
     } catch {
@@ -182,14 +170,18 @@ export async function start(args: StartArgs): Promise<void> {
     process.stdout.write('.');
   }, 2000);
 
-  // Stop the worker only if it hasn't started yet
+  // Stop the worker container only if it hasn't started yet
   let cleaned = false;
   const cleanup = (): void => {
     if (cleaned || started) return;
     cleaned = true;
     clearInterval(pollInterval);
     console.log(`\nStopping worker ${containerName}...`);
-    handle.kill();
+    try {
+      execFileSync('docker', ['stop', containerName], { stdio: 'pipe' });
+    } catch {
+      // Container may have already exited
+    }
   };
 
   process.on('SIGINT', () => {
@@ -205,7 +197,6 @@ export async function start(args: StartArgs): Promise<void> {
 
 function printInfo(
   args: StartArgs,
-  routerActive: boolean,
   workspace: string,
   workflowId: string,
   repoPath: string,
@@ -222,9 +213,6 @@ function printInfo(
   }
   if (args.pipelineTesting) {
     console.log('  Mode:       Pipeline Testing');
-  }
-  if (routerActive) {
-    console.log('  Router:     Enabled');
   }
   console.log('');
   console.log('  Monitor:');

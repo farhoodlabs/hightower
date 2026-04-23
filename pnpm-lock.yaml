@@ -1485,8 +1485,8 @@ packages:
     resolution: {integrity: sha512-SAzp/O4Yh02jGdRc+uIrGoe87dkN/XtwxfZ4ZyafJHymd79ozp5VG5nyZ7ygqPM5+cpLDjjGnYFUkngonyDPOQ==}
     engines: {node: '>=14.0.0'}
 
-  protobufjs@7.5.4:
-    resolution: {integrity: sha512-CvexbZtbov6jW2eXAvLukXjXUW1TzFaivC46BpWc/3BpcCysb5Vffu+B3XHMm8lVEuy2Mm4XGex8hBSg1yapPg==}
+  protobufjs@7.5.5:
+    resolution: {integrity: sha512-3wY1AxV+VBNW8Yypfd1yQY9pXnqTAN+KwQxL8iYm3/BjKYMNg4i0owhEe26PWDOMaIrzeeF98Lqd5NGz4omiIg==}
     engines: {node: '>=12.0.0'}
 
   proxy-addr@2.0.7:
@@ -2038,7 +2038,7 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.3.2
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
       yargs: 17.7.2
 
   '@hono/node-server@1.19.13(hono@4.12.12)':
@@ -2488,7 +2488,7 @@ snapshots:
   '@temporalio/proto@1.15.0':
     dependencies:
       long: 5.3.2
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
 
   '@temporalio/worker@1.15.0(tslib@2.8.1)':
     dependencies:
@@ -2506,7 +2506,7 @@ snapshots:
       memfs: 4.56.11(tslib@2.8.1)
       nexus-rpc: 0.0.1
       proto3-json-serializer: 2.0.2
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
       rxjs: 7.8.2
       source-map: 0.7.6
       source-map-loader: 4.0.2(webpack@5.105.4(@swc/core@1.15.18))
@@ -3209,9 +3209,9 @@ snapshots:
 
   proto3-json-serializer@2.0.2:
     dependencies:
-      protobufjs: 7.5.4
+      protobufjs: 7.5.5
 
-  protobufjs@7.5.4:
+  protobufjs@7.5.5:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2

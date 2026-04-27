@@ -30,7 +30,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          LATEST=$(npm view "@keygraph/shannon" dist-tags.beta 2>/dev/null || echo "")
+          LATEST=$(npm view "@trebuchet/cli" dist-tags.beta 2>/dev/null || echo "")
 
           if [[ -z "$LATEST" ]]; then
             echo "version=1.0.0-beta.1" >> "$GITHUB_OUTPUT"
@@ -71,7 +71,7 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: keygraph/shannon:${{ needs.preflight.outputs.version }}
+          tags: farhoodlabs/trebuchet:${{ needs.preflight.outputs.version }}
 
   build-docker-api:
     name: Build Docker (API)
@@ -101,7 +101,7 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: keygraph/shannon-api:${{ needs.preflight.outputs.version }}
+          tags: farhoodlabs/trebuchet-api:${{ needs.preflight.outputs.version }}
 
   sign-docker:
     name: Sign Docker images
@@ -127,25 +127,25 @@ jobs:
       - name: Inspect worker image
         id: inspect-worker
         run: |
-          docker buildx imagetools inspect "keygraph/shannon:${{ needs.preflight.outputs.version }}"
-          DIGEST="sha256:$(docker buildx imagetools inspect --raw "keygraph/shannon:${{ needs.preflight.outputs.version }}" | sha256sum | cut -d' ' -f1)"
+          docker buildx imagetools inspect "farhoodlabs/trebuchet:${{ needs.preflight.outputs.version }}"
+          DIGEST="sha256:$(docker buildx imagetools inspect --raw "farhoodlabs/trebuchet:${{ needs.preflight.outputs.version }}" | sha256sum | cut -d' ' -f1)"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Inspect API image
         id: inspect-api
         run: |
-          docker buildx imagetools inspect "keygraph/shannon-api:${{ needs.preflight.outputs.version }}"
-          DIGEST="sha256:$(docker buildx imagetools inspect --raw "keygraph/shannon-api:${{ needs.preflight.outputs.version }}" | sha256sum | cut -d' ' -f1)"
+          docker buildx imagetools inspect "farhoodlabs/trebuchet-api:${{ needs.preflight.outputs.version }}"
+          DIGEST="sha256:$(docker buildx imagetools inspect --raw "farhoodlabs/trebuchet-api:${{ needs.preflight.outputs.version }}" | sha256sum | cut -d' ' -f1)"
           echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Install cosign
         uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
       - name: Sign worker image
-        run: cosign sign --yes "keygraph/shannon@${{ steps.inspect-worker.outputs.digest }}"
+        run: cosign sign --yes "farhoodlabs/trebuchet@${{ steps.inspect-worker.outputs.digest }}"
 
       - name: Sign API image
-        run: cosign sign --yes "keygraph/shannon-api@${{ steps.inspect-api.outputs.digest }}"
+        run: cosign sign --yes "farhoodlabs/trebuchet-api@${{ steps.inspect-api.outputs.digest }}"
 
       - name: Verify worker image signature
         run: |
@@ -153,14 +153,14 @@ jobs:
           cosign verify \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             --certificate-identity https://github.com/${{ github.repository }}/.github/workflows/release-beta.yml@${{ github.ref }} \
-            "keygraph/shannon@${{ steps.inspect-worker.outputs.digest }}"
+            "farhoodlabs/trebuchet@${{ steps.inspect-worker.outputs.digest }}"
 
       - name: Verify API image signature
         run: |
           cosign verify \
             --certificate-oidc-issuer https://token.actions.githubusercontent.com \
             --certificate-identity https://github.com/${{ github.repository }}/.github/workflows/release-beta.yml@${{ github.ref }} \
-            "keygraph/shannon-api@${{ steps.inspect-api.outputs.digest }}"
+            "farhoodlabs/trebuchet-api@${{ steps.inspect-api.outputs.digest }}"
 
   publish-npm:
     name: Publish npm (beta)
@@ -194,14 +194,14 @@ jobs:
         run: pnpm install --lockfile-only
 
       - name: Build CLI
-        run: pnpm --filter @keygraph/shannon run build
+        run: pnpm --filter @trebuchet/cli run build
 
       - name: Publish npm package
         working-directory: apps/cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          if npm view "@keygraph/shannon@${{ needs.preflight.outputs.version }}" version 2>/dev/null; then
+          if npm view "@trebuchet/cli@${{ needs.preflight.outputs.version }}" version 2>/dev/null; then
             echo "Version already published, skipping"
           else
             pnpm publish --access public --no-git-checks --tag beta

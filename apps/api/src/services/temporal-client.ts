@@ -3,7 +3,7 @@
  * Uses @temporalio/client (not worker) since the API server only submits and queries workflows.
  */
 
-import type { PipelineProgress } from '@shannon/worker/pipeline';
+import type { PipelineProgress } from '@trebuchet/worker/pipeline';
 import { Client, Connection } from '@temporalio/client';
 
 export interface TemporalClients {

@@ -1,5 +1,5 @@
 {
-  "name": "@shannon/api",
+  "name": "@trebuchet/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "@hono/node-server": "^1.14.0",
     "@kubernetes/client-node": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@shannon/worker": "workspace:*",
+    "@trebuchet/worker": "workspace:*",
     "@temporalio/client": "^1.11.0",
     "hono": "^4.7.0",
     "zod": "^4.3.6"

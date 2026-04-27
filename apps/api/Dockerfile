@@ -21,7 +21,7 @@ COPY apps/worker/ ./apps/worker/
 COPY apps/api/ ./apps/api/
 
 # Build worker first (API depends on it for types), then API
-RUN pnpm --filter @shannon/worker run build && pnpm --filter @shannon/api run build
+RUN pnpm --filter @trebuchet/worker run build && pnpm --filter @trebuchet/api run build
 
 # Production-only deps
 RUN rm -rf node_modules apps/*/node_modules && pnpm install --frozen-lockfile --prod

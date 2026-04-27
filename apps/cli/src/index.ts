@@ -38,7 +38,7 @@ function getVersion(): string {
 
 function showHelp(): void {
   const mode = getMode();
-  const prefix = mode === 'local' ? './shannon' : 'npx @keygraph/shannon';
+  const prefix = mode === 'local' ? './trebuchet' : 'npx @trebuchet/cli';
 
   console.log(`
 Shannon - AI Penetration Testing Framework
@@ -155,14 +155,14 @@ function parseStartArgs(argv: string[]): ParsedStartArgs {
         break;
       default:
         console.error(`Unknown option: ${arg}`);
-        console.error(`Run "${getMode() === 'local' ? './shannon' : 'npx @keygraph/shannon'} help" for usage`);
+        console.error(`Run "${getMode() === 'local' ? './trebuchet' : 'npx @trebuchet/cli'} help" for usage`);
         process.exit(1);
     }
   }
 
   if (!url || !repo) {
     console.error('ERROR: --url and --repo are required');
-    console.error(`Usage: ${getMode() === 'local' ? './shannon' : 'npx @keygraph/shannon'} start -u <url> -r <path>`);
+    console.error(`Usage: ${getMode() === 'local' ? './trebuchet' : 'npx @trebuchet/cli'} start -u <url> -r <path>`);
     process.exit(1);
   }
 
@@ -208,7 +208,7 @@ switch (command) {
     const workspaceId = args[1];
     if (!workspaceId) {
       console.error('ERROR: Workspace ID is required');
-      console.error(`Usage: ${getMode() === 'local' ? './shannon' : 'npx @keygraph/shannon'} logs <workspace>`);
+      console.error(`Usage: ${getMode() === 'local' ? './trebuchet' : 'npx @trebuchet/cli'} logs <workspace>`);
       process.exit(1);
     }
     logs(workspaceId);

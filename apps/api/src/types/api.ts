@@ -2,7 +2,7 @@
  * Request/response types and Zod validation schemas for the scan API.
  */
 
-import type { AgentMetrics, PipelineSummary } from '@shannon/worker/pipeline';
+import type { AgentMetrics, PipelineSummary } from '@trebuchet/worker/pipeline';
 import { z } from 'zod';
 
 // === Request Schemas ===

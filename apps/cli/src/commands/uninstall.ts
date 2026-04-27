@@ -34,5 +34,5 @@ export async function uninstall(): Promise<void> {
 
   fs.rmSync(SHANNON_HOME, { recursive: true, force: true });
   p.log.success('All Shannon data has been removed.');
-  p.outro('Shannon has been uninstalled. Run `npx @keygraph/shannon setup` to start fresh.');
+  p.outro('Trebuchet has been uninstalled. Run `npx @trebuchet/cli setup` to start fresh.');
 }

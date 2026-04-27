@@ -67,7 +67,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Build worker. CLI not needed in Docker
-RUN pnpm --filter @shannon/worker run build
+RUN pnpm --filter @trebuchet/worker run build
 
 # Production-only deps (pnpm recommends install --prod over prune in monorepos)
 RUN rm -rf node_modules apps/*/node_modules && pnpm install --frozen-lockfile --prod

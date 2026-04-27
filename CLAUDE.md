@@ -21,9 +21,11 @@ pnpm biome:fix                       # Auto-fix lint, format, and import sorting
 ### Monorepo Layout
 
 ```
-apps/api/        — @shannon/api (Hightower REST API, K8s-native)
-apps/cli/        — @keygraph/shannon (upstream CLI, not used in production)
-apps/worker/     — @shannon/worker (upstream Temporal worker + pipeline logic)
+apps/api/        — @trebuchet/api (Trebuchet REST API, K8s-native)
+
+ apps/cli/        — @trebuchet/cli (upstream CLI, not used in production)
+
+ apps/worker/     — @trebuchet/worker (upstream Temporal worker + pipeline logic)
 ```
 
 ### API Package (`apps/api/`)

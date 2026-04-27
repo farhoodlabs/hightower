@@ -1,11 +1,11 @@
 {
-  "name": "@keygraph/shannon",
+  "name": "@trebuchet/cli",
   "version": "0.0.0",
-  "description": "Shannon - Autonomous white-box AI pentester for web applications and APIs by Keygraph",
+  "description": "Trebuchet - Autonomous white-box AI pentester for web applications and APIs by Farhood Labs",
   "type": "module",
   "main": "dist/index.mjs",
   "bin": {
-    "shannon": "dist/index.mjs"
+    "trebuchet": "dist/index.mjs"
   },
   "files": [
     "dist",

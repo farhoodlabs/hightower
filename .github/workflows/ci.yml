@@ -68,8 +68,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/farhoodlabs/shannon:latest
-            ghcr.io/farhoodlabs/shannon:sha-${{ github.sha }}
+            ghcr.io/farhoodlabs/trebuchet:latest
+            ghcr.io/farhoodlabs/trebuchet:sha-${{ github.sha }}
 
   build-api:
     name: Build & push API image
@@ -102,5 +102,5 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ghcr.io/farhoodlabs/hightower-api:latest
-            ghcr.io/farhoodlabs/hightower-api:sha-${{ github.sha }}
+            ghcr.io/farhoodlabs/trebuchet-api:latest
+            ghcr.io/farhoodlabs/trebuchet-api:sha-${{ github.sha }}
